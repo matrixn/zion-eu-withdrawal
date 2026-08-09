@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1 — Simplified WordPress admin navigation
+
+- Removed the redundant plugin header navigation visually from all admin pages; WordPress core menu remains the single navigation source.
+
 ## 1.0.0 — Phase 6-10 operational Free release
 
 - Added consumer and merchant confirmation e-mails with exact immutable snapshots.

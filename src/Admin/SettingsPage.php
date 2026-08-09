@@ -49,6 +49,7 @@ final class SettingsPage
 
         wp_enqueue_style('zion-eu-withdrawal-admin', ZION_EU_WITHDRAWAL_URL . 'assets/admin.css', [], ZION_EU_WITHDRAWAL_VERSION);
         wp_enqueue_style('zion-eu-withdrawal-admin-phase', ZION_EU_WITHDRAWAL_URL . 'assets/admin-phase.css', ['zion-eu-withdrawal-admin'], ZION_EU_WITHDRAWAL_VERSION);
+        wp_enqueue_style('zion-eu-withdrawal-admin-navigation', ZION_EU_WITHDRAWAL_URL . 'assets/admin-navigation.css', ['zion-eu-withdrawal-admin-phase'], ZION_EU_WITHDRAWAL_VERSION);
         wp_enqueue_script('zion-eu-withdrawal-admin', ZION_EU_WITHDRAWAL_URL . 'assets/admin.js', ['jquery'], ZION_EU_WITHDRAWAL_VERSION, true);
         wp_localize_script('zion-eu-withdrawal-admin', 'ZionEuWithdrawalAdmin', [
             'ajaxUrl' => admin_url('admin-ajax.php'),
@@ -257,10 +258,8 @@ final class SettingsPage
 
     private function render_header(string $active): void
     {
-        $overview = admin_url('admin.php?page=zion-eu-withdrawal');
-        $settings = admin_url('admin.php?page=zion-eu-withdrawal-settings');
         ?>
-        <div class="wrap zion-eu-admin" data-zion-language="<?php echo esc_attr($this->locale->language()); ?>"><div class="zion-eu-topbar"><a class="zion-eu-brand" href="<?php echo esc_url($overview); ?>"><span class="zion-eu-brand-mark">Z</span><span><strong>Zion</strong><small>EU Withdrawal</small></span></a><nav><a class="<?php echo $active === 'overview' ? 'is-active' : ''; ?>" href="<?php echo esc_url($overview); ?>"><?php echo esc_html($this->locale->text('Prezentare', 'Overview')); ?></a><a class="<?php echo $active === 'settings' ? 'is-active' : ''; ?>" href="<?php echo esc_url($settings); ?>"><?php echo esc_html($this->locale->text('Setări', 'Settings')); ?></a></nav><span class="zion-eu-version">v<?php echo esc_html(ZION_EU_WITHDRAWAL_VERSION); ?></span></div>
+        <div class="wrap zion-eu-admin" data-zion-language="<?php echo esc_attr($this->locale->language()); ?>">
         <?php if (! $this->woocommerce->is_available()) : ?><div class="zion-eu-alert zion-eu-alert--warning"><span>!</span><?php echo esc_html($this->woocommerce->message($this->locale->language())); ?></div><?php endif; ?><main class="zion-eu-content">
         <?php
     }

@@ -142,7 +142,7 @@ final class WithdrawalsPage
 
     private function header(): void
     {
-        ?><div class="wrap zion-eu-admin"><div class="zion-eu-topbar"><a class="zion-eu-brand" href="<?php echo esc_url(admin_url('admin.php?page=zion-eu-withdrawal')); ?>"><span class="zion-eu-brand-mark">Z</span><span><strong>Zion</strong><small>EU Withdrawal</small></span></a><nav><a href="<?php echo esc_url(admin_url('admin.php?page=zion-eu-withdrawal')); ?>"><?php echo esc_html($this->locale->text('Prezentare', 'Overview')); ?></a><a class="is-active" href="<?php echo esc_url(admin_url('admin.php?page=zion-eu-withdrawal-requests')); ?>"><?php echo esc_html($this->locale->text('Cereri', 'Requests')); ?></a><a href="<?php echo esc_url(admin_url('admin.php?page=zion-eu-withdrawal-settings')); ?>"><?php echo esc_html($this->locale->text('Setari', 'Settings')); ?></a></nav><span class="zion-eu-version">v<?php echo esc_html(ZION_EU_WITHDRAWAL_VERSION); ?></span></div><main class="zion-eu-content">
+        ?><div class="wrap zion-eu-admin"><main class="zion-eu-content">
         <?php
     }
 
