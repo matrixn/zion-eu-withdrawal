@@ -96,15 +96,15 @@ live='$RemotePluginPath'
 stage='$RemoteStagePath'
 old='$RemoteOldPath'
 backup_root='$RemoteBackupRoot'
-mkdir -p "\$plugin_root" "\$backup_root"
-if [ -d "\$live" ]; then tar -czf "\$backup_root/$Timestamp.tar.gz" -C "\$plugin_root" '$DeploymentDirectory'; fi
-rm -rf "\$stage"
-mkdir -p "\$stage"
-tar -xzf "\$archive" -C "\$stage"
-test -f "\$stage/$DeploymentDirectory/$SourcePluginFile"
-if [ -d "\$live" ]; then mv "\$live" "\$old"; fi
-mv "\$stage/$DeploymentDirectory" "\$live"
-rm -rf "\$old" "\$stage" "\$archive"
+mkdir -p "`$plugin_root" "`$backup_root"
+if [ -d "`$live" ]; then tar -czf "`$backup_root/$Timestamp.tar.gz" -C "`$plugin_root" '$DeploymentDirectory'; fi
+rm -rf "`$stage"
+mkdir -p "`$stage"
+tar -xzf "`$archive" -C "`$stage"
+test -f "`$stage/$DeploymentDirectory/$SourcePluginFile"
+if [ -d "`$live" ]; then mv "`$live" "`$old"; fi
+mv "`$stage/$DeploymentDirectory" "`$live"
+rm -rf "`$old" "`$stage" "`$archive"
 echo 'Deployment Synology finalizat.'
 "@
 Invoke-RemoteScript $remote
