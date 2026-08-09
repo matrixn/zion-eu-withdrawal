@@ -1,0 +1,55 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Deploy plugin pe Synology",
+            "type": "process",
+            "command": "powershell.exe",
+            "args": [
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "\\\\wsl.localhost\\Ubuntu-22.04\\home\\matrixn\\workspace\\wordpress-plugins\\zion-eu-withdrawal\\deploy.ps1"
+            ],
+            "group": {"kind": "build", "isDefault": true},
+            "presentation": {"reveal": "always", "panel": "dedicated", "clear": true},
+            "problemMatcher": []
+        },
+        {
+            "label": "Deploy plugin fara teste",
+            "type": "process",
+            "command": "powershell.exe",
+            "args": [
+                "-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
+                "\\\\wsl.localhost\\Ubuntu-22.04\\home\\matrixn\\workspace\\wordpress-plugins\\zion-eu-withdrawal\\deploy.ps1",
+                "-SkipTests"
+            ],
+            "presentation": {"reveal": "always", "panel": "dedicated", "clear": true},
+            "problemMatcher": []
+        },
+        {
+            "label": "Verifica build deployment",
+            "type": "process",
+            "command": "powershell.exe",
+            "args": [
+                "-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
+                "\\\\wsl.localhost\\Ubuntu-22.04\\home\\matrixn\\workspace\\wordpress-plugins\\zion-eu-withdrawal\\deploy.ps1",
+                "-DryRun"
+            ],
+            "presentation": {"reveal": "always", "panel": "dedicated", "clear": true},
+            "problemMatcher": []
+        },
+        {
+            "label": "Pregateste arhiva de release",
+            "type": "process",
+            "command": "wsl.exe",
+            "args": [
+                "-d", "Ubuntu-22.04", "--cd", "/home/matrixn/workspace/wordpress-plugins/zion-eu-withdrawal",
+                "bash", "-lc", "bash bin/build-release.sh"
+            ],
+            "presentation": {"reveal": "always", "panel": "dedicated", "clear": true},
+            "problemMatcher": []
+        }
+    ]
+}

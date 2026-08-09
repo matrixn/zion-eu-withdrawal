@@ -1,0 +1,42 @@
+{
+    "name": "zion3d/zion-eu-withdrawal",
+    "description": "Professional EU withdrawal foundation for WooCommerce with a verified Romanian legal profile.",
+    "version": "0.1.0",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "require": {
+        "php": ">=8.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Zion\\EuWithdrawal\\": "src/"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true,
+        "allow-plugins": {}
+    },
+    "scripts": {
+        "test:unit": "@php vendor/bin/phpunit --configuration phpunit.xml.dist",
+        "check-syntax": [
+            "@php -l zion-eu-withdrawal.php",
+            "@php -l uninstall.php",
+            "@php -l src/Plugin.php",
+            "@php -l src/Admin/SettingsPage.php",
+            "@php -l src/Infrastructure/Database.php",
+            "@php -l src/Legal/LegalProfile.php",
+            "@php -l src/Legal/ROLegalProfile.php",
+            "@php -l src/Lifecycle/Activator.php",
+            "@php -l src/Lifecycle/Deactivator.php",
+            "@php -l src/Lifecycle/Uninstaller.php",
+            "@php -l src/Internationalization/LocaleManager.php",
+            "@php -l src/Integration/WooCommerceDetector.php"
+        ]
+    },
+    "require-dev": {
+        "php-stubs/woocommerce-stubs": "^10.9",
+        "php-stubs/wordpress-stubs": "^7.0",
+        "phpunit/phpunit": "^11.5"
+    }
+}
