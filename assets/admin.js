@@ -41,3 +41,42 @@
         timers[input.dataset.zionSetting] = setTimeout(function () { save(input); }, 250);
     });
 }(jQuery));
+
+(function ($) {
+    'use strict';
+
+    const config = window.ZionEuWithdrawalAdmin || {};
+
+    $(document).on('click', '[data-save-withdrawal]', function () {
+        const button = $(this);
+        const id = button.data('save-withdrawal');
+        const card = button.closest('.zion-eu-admin-edit-card');
+        const feedback = card.find('[data-withdrawal-feedback]');
+        feedback.removeClass('is-error is-saved').addClass('is-saving').text('Saving…');
+        button.prop('disabled', true);
+        $.post(config.ajaxUrl, {
+            action: 'zion_eu_update_withdrawal',
+            nonce: config.adminNonce || '',
+            id: id,
+            status: card.find('[data-withdrawal-status]').val(),
+            merchant_notes: card.find('[data-withdrawal-notes]').val()
+        }).done(function (response) {
+            if (!response || !response.success) throw new Error(response && response.data && response.data.message ? response.data.message : 'Could not save.');
+            feedback.removeClass('is-saving is-error').addClass('is-saved').text(response.data.message || 'Saved.');
+        }).fail(function (xhr) {
+            const response = xhr.responseJSON || {};
+            feedback.removeClass('is-saving is-saved').addClass('is-error').text(response.data && response.data.message ? response.data.message : (config.error || 'Could not save.'));
+        }).always(function () { button.prop('disabled', false); });
+    });
+
+    $(document).on('click', '[data-resend-notification]', function () {
+        const button = $(this);
+        button.prop('disabled', true);
+        $.post(config.ajaxUrl, { action: 'zion_eu_resend_notification', nonce: config.adminNonce || '', id: button.data('resend-notification'), type: button.data('notification-type') }).done(function (response) {
+            window.alert(response && response.data && response.data.message ? response.data.message : 'Notification processed.');
+        }).fail(function (xhr) {
+            const response = xhr.responseJSON || {};
+            window.alert(response.data && response.data.message ? response.data.message : 'Notification delivery failed.');
+        }).always(function () { button.prop('disabled', false); });
+    });
+}(jQuery));

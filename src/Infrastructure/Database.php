@@ -6,7 +6,7 @@ namespace Zion\EuWithdrawal\Infrastructure;
 
 final class Database
 {
-    public const DB_VERSION = '0.5.0';
+    public const DB_VERSION = '1.0.0';
 
     public function maybe_upgrade(): void
     {
@@ -45,6 +45,11 @@ final class Database
             start_date datetime NULL,
             deadline_date datetime NULL,
             confirmation_token_hash varchar(255) NULL,
+            eligibility_snapshot longtext NULL,
+            delivery_date datetime NULL,
+            withdrawal_period_start datetime NULL,
+            estimated_deadline datetime NULL,
+            legal_exception_code varchar(16) NULL,
             merchant_notes longtext NULL,
             created_at datetime NOT NULL,
             updated_at datetime NOT NULL,
@@ -62,9 +67,11 @@ final class Database
             withdrawal_id bigint(20) unsigned NOT NULL,
             order_item_id bigint(20) unsigned NULL,
             product_id bigint(20) unsigned NULL,
+            product_name varchar(190) NOT NULL DEFAULT '',
             quantity decimal(20,6) NOT NULL DEFAULT 1,
             eligibility varchar(32) NOT NULL DEFAULT 'standard',
             exception_code varchar(16) NULL,
+            eligibility_reason longtext NULL,
             created_at datetime NOT NULL,
             PRIMARY KEY  (id),
             KEY withdrawal_id (withdrawal_id),
@@ -86,6 +93,42 @@ final class Database
             KEY order_email (order_id, email_hash),
             KEY expires_at (expires_at)
         ) {$charset};");
+
+        $notifications = $wpdb->prefix . 'zion_eu_withdrawal_notifications';
+
+        dbDelta("CREATE TABLE {$notifications} (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            withdrawal_id bigint(20) unsigned NOT NULL,
+            notification_type varchar(32) NOT NULL,
+            recipient longtext NOT NULL,
+            subject varchar(255) NOT NULL DEFAULT '',
+            status varchar(16) NOT NULL DEFAULT 'pending',
+            attempts int(10) unsigned NOT NULL DEFAULT 0,
+            error_message longtext NULL,
+            sent_at datetime NULL,
+            created_at datetime NOT NULL,
+            updated_at datetime NOT NULL,
+            PRIMARY KEY  (id),
+            KEY withdrawal_type (withdrawal_id, notification_type),
+            KEY status (status),
+            KEY created_at (created_at)
+        ) {$charset};");
+
+        $audit = $wpdb->prefix . 'zion_eu_withdrawal_audit';
+
+        dbDelta("CREATE TABLE {$audit} (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            withdrawal_id bigint(20) unsigned NOT NULL,
+            event_type varchar(48) NOT NULL,
+            actor_user_id bigint(20) unsigned NULL,
+            message longtext NOT NULL,
+            metadata longtext NULL,
+            created_at datetime NOT NULL,
+            PRIMARY KEY  (id),
+            KEY withdrawal_id (withdrawal_id),
+            KEY event_type (event_type),
+            KEY created_at (created_at)
+        ) {$charset};");
     }
 
     /** @return array<string, string> */
@@ -97,6 +140,8 @@ final class Database
             'withdrawals' => $wpdb->prefix . 'zion_eu_withdrawals',
             'items' => $wpdb->prefix . 'zion_eu_withdrawal_items',
             'guest_tokens' => $wpdb->prefix . 'zion_eu_guest_tokens',
+            'notifications' => $wpdb->prefix . 'zion_eu_withdrawal_notifications',
+            'audit' => $wpdb->prefix . 'zion_eu_withdrawal_audit',
         ];
     }
 }

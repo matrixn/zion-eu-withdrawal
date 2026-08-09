@@ -60,6 +60,10 @@ The future withdrawal flow must retain, at minimum:
 3. [Directive (EU) 2023/2673 — EUR-Lex, Romanian text](https://eur-lex.europa.eu/legal-content/RO/TXT/?uri=celex%3A32023L2673), including the online withdrawal-function requirements in art. 11a.
 4. [OUG nr. 18/2026 — Portal Legislativ](https://legislatie.just.ro/Public/DetaliiDocument/308474), including the clear confirmation-function wording.
 
+## Eligibility engine boundary
+
+Phase 7 uses product/category metadata and an explicit delivery-date provider to create an indicative item-level signal: `standard`, `potential_exception` or `unknown`. The signal is recorded in the withdrawal evidence and never becomes an automatic rejection, approval or refund decision. If delivery information is unavailable, the submission remains available and the merchant is shown that manual review is needed.
+
 ## Release rule
 
 Any change to the profile, exceptions, start-date rules or required evidence must update this file, `CHANGELOG.md`, the profile version and the relevant tests before release. Legal sources should be re-checked before every public release.

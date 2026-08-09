@@ -33,12 +33,17 @@ final class WithdrawalRepository
             'start_date' => $data['start_date'] ?? null,
             'deadline_date' => $data['deadline_date'] ?? null,
             'confirmation_token_hash' => $data['confirmation_token_hash'] ?? null,
+            'eligibility_snapshot' => $data['eligibility_snapshot'] ?? null,
+            'delivery_date' => $data['delivery_date'] ?? null,
+            'withdrawal_period_start' => $data['withdrawal_period_start'] ?? null,
+            'estimated_deadline' => $data['estimated_deadline'] ?? null,
+            'legal_exception_code' => $data['legal_exception_code'] ?? null,
             'merchant_notes' => $data['merchant_notes'] ?? null,
             'created_at' => $now,
             'updated_at' => $now,
         ];
 
-        $formats = ['%s', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s'];
+        $formats = ['%s', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s'];
 
         if (false === $wpdb->insert($tables['withdrawals'], $row, $formats)) {
             throw new \RuntimeException('The withdrawal could not be persisted.');
@@ -59,11 +64,13 @@ final class WithdrawalRepository
                 'withdrawal_id' => $withdrawal_id,
                 'order_item_id' => (int) ($item['order_item_id'] ?? 0),
                 'product_id' => (int) ($item['product_id'] ?? 0),
+                'product_name' => (string) ($item['name'] ?? ''),
                 'quantity' => (float) ($item['quantity'] ?? 1),
-                'eligibility' => 'unassessed',
-                'exception_code' => null,
+                'eligibility' => (string) ($item['eligibility'] ?? 'unknown'),
+                'exception_code' => $item['exception_code'] ?? null,
+                'eligibility_reason' => (string) ($item['eligibility_reason'] ?? ''),
                 'created_at' => gmdate('Y-m-d H:i:s'),
-            ], ['%d', '%d', '%d', '%f', '%s', '%s', '%s']);
+            ], ['%d', '%d', '%d', '%s', '%f', '%s', '%s', '%s', '%s']);
         }
     }
 
@@ -73,7 +80,7 @@ final class WithdrawalRepository
     }
 
     /** @return array<int, array<string, mixed>> */
-    public function all(string $status = '', int $limit = 50, int $offset = 0): array
+    public function all(string $status = '', int $limit = 50, int $offset = 0, string $search = '', string $source = ''): array
     {
         global $wpdb;
 
@@ -83,10 +90,21 @@ final class WithdrawalRepository
         $where = '';
         $args = [];
 
+        $conditions = [];
         if ($status !== '') {
-            $where = ' WHERE status = %s';
+            $conditions[] = 'status = %s';
             $args[] = $status;
         }
+        if ($source !== '') {
+            $conditions[] = 'source = %s';
+            $args[] = $source;
+        }
+        if ($search !== '') {
+            $like = '%' . $wpdb->esc_like($search) . '%';
+            $conditions[] = '(withdrawal_id LIKE %s OR customer_name LIKE %s OR customer_email LIKE %s OR contract_reference LIKE %s)';
+            array_push($args, $like, $like, $like, $like);
+        }
+        $where = $conditions === [] ? '' : ' WHERE ' . implode(' AND ', $conditions);
 
         $args[] = $limit;
         $args[] = $offset;
@@ -105,6 +123,21 @@ final class WithdrawalRepository
         }
 
         return (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$table} WHERE status = %s", $status));
+    }
+
+    public function update(int $id, string $status, string $merchant_notes): bool
+    {
+        global $wpdb;
+
+        $updated = $wpdb->update(
+            $this->database->table_names()['withdrawals'],
+            ['status' => sanitize_key($status), 'merchant_notes' => sanitize_textarea_field($merchant_notes), 'updated_at' => gmdate('Y-m-d H:i:s')],
+            ['id' => $id],
+            ['%s', '%s', '%s'],
+            ['%d']
+        );
+
+        return $updated !== false;
     }
 
     /** @return array<string, mixed>|null */

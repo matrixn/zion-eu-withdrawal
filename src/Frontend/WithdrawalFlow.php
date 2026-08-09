@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Zion\EuWithdrawal\Frontend;
 
 use Zion\EuWithdrawal\Infrastructure\GuestTokenRepository;
+use Zion\EuWithdrawal\Infrastructure\NotificationService;
 use Zion\EuWithdrawal\Infrastructure\WithdrawalRepository;
 use Zion\EuWithdrawal\Internationalization\LocaleManager;
 use Zion\EuWithdrawal\Legal\LegalProfile;
+use Zion\EuWithdrawal\Legal\EligibilityEngine;
 
 final class WithdrawalFlow
 {
@@ -19,7 +21,9 @@ final class WithdrawalFlow
         private readonly GuestTokenRepository $guest_tokens,
         private readonly PageManager $pages,
         private readonly LegalProfile $profile,
-        private readonly LocaleManager $locale
+        private readonly LocaleManager $locale,
+        private readonly EligibilityEngine $eligibility,
+        private readonly NotificationService $notifications
     ) {
     }
 
@@ -110,6 +114,8 @@ final class WithdrawalFlow
         }
 
         $items = $this->orders->items($order);
+        $eligibility = $this->eligibility->evaluate_order($order, $items);
+        $items = $eligibility['items'];
         $review_token = wp_generate_uuid4();
         $review_data = [
             'order_id' => (int) $order->get_id(),
@@ -122,6 +128,7 @@ final class WithdrawalFlow
             'source' => is_array($guest_row) ? 'guest' : ($user_id ? 'account' : 'public'),
             'guest_token' => $guest_token,
             'items' => $items,
+            'eligibility' => $eligibility,
             'created_at' => time(),
         ];
         set_transient($this->review_key($review_token), $review_data, self::REVIEW_TTL);
@@ -131,6 +138,11 @@ final class WithdrawalFlow
             'order' => [
                 'reference' => (string) $order->get_order_number(),
                 'items' => array_map(static fn (array $item): array => ['name' => (string) $item['name'], 'quantity' => $item['quantity']], $items),
+                'eligibility' => [
+                    'overall' => (string) $eligibility['overall'],
+                    'delivery_date' => $eligibility['delivery_date'],
+                    'estimated_deadline' => $eligibility['estimated_deadline'],
+                ],
             ],
             'message' => $this->locale->text('Contractul a fost identificat. Poți formula declarația.', 'The contract was identified. You can write the statement.'),
         ]);
@@ -168,6 +180,13 @@ final class WithdrawalFlow
                 'legal_profile_version' => $this->profile->version(),
                 'statement_content' => $statement_snapshot,
                 'source' => $review['source'],
+                'start_date' => $review['eligibility']['period_start'] ?? null,
+                'deadline_date' => $review['eligibility']['estimated_deadline'] ?? null,
+                'delivery_date' => $review['eligibility']['delivery_date'] ?? null,
+                'withdrawal_period_start' => $review['eligibility']['period_start'] ?? null,
+                'estimated_deadline' => $review['eligibility']['estimated_deadline'] ?? null,
+                'legal_exception_code' => $this->first_exception_code($review['eligibility']['items'] ?? []),
+                'eligibility_snapshot' => wp_json_encode($review['eligibility'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
                 'created_at' => $now,
             ]);
             $this->repository->create_items($row_id, $review['items']);
@@ -176,6 +195,17 @@ final class WithdrawalFlow
             }
         } catch (\Throwable $exception) {
             $this->error($this->locale->text('Declarația nu a putut fi salvată. Nu reîncărca pagina și încearcă din nou.', 'The statement could not be saved. Do not reload the page and try again.'), 500);
+        }
+
+        $saved = $this->repository->find_by_id($row_id);
+        if (is_array($saved)) {
+            $settings = (array) get_option('zion_eu_withdrawal_settings', []);
+            $consumer_sent = $this->notifications->send_consumer_confirmation($saved);
+            $admin_sent = $this->notifications->send_admin_confirmation($saved);
+            $delivery_failed = (! empty($settings['send_consumer_email']) && ! $consumer_sent) || (! empty($settings['send_admin_email']) && ! $admin_sent);
+            if ($delivery_failed) {
+                $this->repository->update($row_id, 'notification_failed', 'Una sau mai multe notificari nu au putut fi livrate. Verifica logul si retransmite.');
+            }
         }
 
         delete_transient($this->review_key($review_token));
@@ -226,9 +256,22 @@ final class WithdrawalFlow
             'Additional statement: ' . ($review['statement'] !== '' ? $review['statement'] : '[none]'),
             '',
             'The submission was saved server-side at the timestamp above. No legal eligibility or refund decision was made automatically.',
+            'Eligibility snapshot: ' . wp_json_encode($review['eligibility'] ?? [], JSON_UNESCAPED_UNICODE),
         ];
 
         return implode("\n", $lines);
+    }
+
+    /** @param array<int, array<string, mixed>> $items */
+    private function first_exception_code(array $items): ?string
+    {
+        foreach ($items as $item) {
+            if (! empty($item['exception_code'])) {
+                return (string) $item['exception_code'];
+            }
+        }
+
+        return null;
     }
 
     private function error(string $message, int $status): never

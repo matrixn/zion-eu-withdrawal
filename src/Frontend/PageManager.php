@@ -73,6 +73,7 @@ final class PageManager
         }
 
         wp_enqueue_style('zion-eu-withdrawal-public', ZION_EU_WITHDRAWAL_URL . 'assets/public.css', [], ZION_EU_WITHDRAWAL_VERSION);
+        wp_enqueue_style('zion-eu-withdrawal-public-phase', ZION_EU_WITHDRAWAL_URL . 'assets/public-phase.css', ['zion-eu-withdrawal-public'], ZION_EU_WITHDRAWAL_VERSION);
         wp_enqueue_script('zion-eu-withdrawal-public', ZION_EU_WITHDRAWAL_URL . 'assets/public.js', [], ZION_EU_WITHDRAWAL_VERSION, true);
         wp_localize_script('zion-eu-withdrawal-public', 'ZionEuWithdrawalPublic', [
             'ajaxUrl' => admin_url('admin-ajax.php'),

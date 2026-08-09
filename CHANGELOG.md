@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.0 — Phase 6-10 operational Free release
+
+- Added consumer and merchant confirmation e-mails with exact immutable snapshots.
+- Added notification delivery logs, failure status, resend actions and request audit history.
+- Added item-level EligibilityEngine with Romanian profile exception candidates, delivery-date provider abstraction and do-not-block fallback.
+- Added WooCommerce product and category eligibility overrides.
+- Added configurable checkout disclosure, thank-you-page link and WooCommerce customer e-mail link.
+- Added request search, source/status filters, CSV export, internal notes and operational status management.
+- Added the Phase 10 QA matrix and WP-CLI schema/settings smoke contract.
+
 ## 0.5.0 — Phase 4–5 account and guest access
 
 - Added the WooCommerce My Account `Withdrawals` endpoint with history and detail views.
