@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.2 — WooCommerce Checkout Blocks compatibility
+
+- Added official WooCommerce Checkout Blocks integration for the withdrawal disclosure.
+- Added runtime smoke coverage for block registration and rendered checkout output.
+- Added WooCommerce cart/checkout blocks compatibility declaration.
+
 ## 1.0.1 — Simplified WordPress admin navigation
 
 - Removed the redundant plugin header navigation visually from all admin pages; WordPress core menu remains the single navigation source.

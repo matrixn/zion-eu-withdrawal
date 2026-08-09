@@ -3,7 +3,7 @@
  * Plugin Name: Zion EU Withdrawal
  * Plugin URI: https://www.zion3d.ro
  * Description: Fundație profesională pentru gestionarea dreptului de retragere în magazine WooCommerce, cu profil juridic românesc.
- * Version: 1.0.1
+ * Version: 1.0.2
  * Author: Zion3D
  * Author URI: https://www.zion3d.ro
  * License: GPL-2.0-or-later
@@ -20,11 +20,17 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-define('ZION_EU_WITHDRAWAL_VERSION', '1.0.1');
+define('ZION_EU_WITHDRAWAL_VERSION', '1.0.2');
 define('ZION_EU_WITHDRAWAL_FILE', __FILE__);
 define('ZION_EU_WITHDRAWAL_DIR', plugin_dir_path(__FILE__));
 define('ZION_EU_WITHDRAWAL_URL', plugin_dir_url(__FILE__));
 define('ZION_EU_WITHDRAWAL_TEXT_DOMAIN', 'zion-eu-withdrawal');
+
+add_action('before_woocommerce_init', static function (): void {
+    if (class_exists(\Automattic\WooCommerce\Utilities\FeaturesUtil::class)) {
+        \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility('cart_checkout_blocks', __FILE__, true);
+    }
+});
 
 spl_autoload_register(static function (string $class): void {
     $prefix = 'Zion\\EuWithdrawal\\';

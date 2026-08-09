@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /**
  * Run with: wp eval-file tests/smoke/phase23-workflow.php
  * The script is intentionally read-only; it checks the activation/page/DB contract.

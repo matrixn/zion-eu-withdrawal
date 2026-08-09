@@ -23,6 +23,19 @@ final class CheckoutDisclosure
         add_action('woocommerce_after_order_notes', [$this, 'after_order_notes'], 12);
         add_action('woocommerce_thankyou', [$this, 'thankyou'], 12);
         add_action('woocommerce_email_order_meta', [$this, 'email_order_meta'], 20, 4);
+        add_action('woocommerce_blocks_checkout_block_registration', [$this, 'register_blocks_integration']);
+    }
+
+    public function register_blocks_integration(mixed $integration_registry): void
+    {
+        if (! is_object($integration_registry) || ! method_exists($integration_registry, 'register') || ! interface_exists('Automattic\\WooCommerce\\Blocks\\Integrations\\IntegrationInterface')) {
+            return;
+        }
+
+        $integration = 'Zion\\EuWithdrawal\\Integration\\WooCommerceCheckoutBlocksIntegration';
+        if (class_exists($integration)) {
+            $integration_registry->register(new $integration($this->locale, $this->pages));
+        }
     }
 
     public function before_form(): void

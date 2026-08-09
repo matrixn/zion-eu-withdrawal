@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /** Run with: wp eval-file tests/smoke/phase610-contract.php */
 
 if (! defined('ABSPATH')) {
