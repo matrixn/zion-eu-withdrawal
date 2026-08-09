@@ -199,6 +199,7 @@ final class WithdrawalFlow
 
         $saved = $this->repository->find_by_id($row_id);
         if (is_array($saved)) {
+            do_action('zion_eu_withdrawal_created', $saved);
             $settings = (array) get_option('zion_eu_withdrawal_settings', []);
             $consumer_sent = $this->notifications->send_consumer_confirmation($saved);
             $admin_sent = $this->notifications->send_admin_confirmation($saved);

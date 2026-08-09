@@ -18,7 +18,10 @@ final class WooCommerceDeliveryDateProvider implements DeliveryDateProvider
         }
 
         $settings = (array) get_option('zion_eu_withdrawal_settings', []);
-        $key = sanitize_key((string) ($settings['delivery_date_meta_key'] ?? '_zion_delivery_date'));
+        $key = sanitize_key((string) apply_filters(
+            'zion_eu_withdrawal_delivery_date_meta_key',
+            $settings['delivery_date_meta_key'] ?? '_zion_delivery_date'
+        ));
         $keys = array_values(array_unique(array_filter([$key, '_zion_delivery_date', '_delivery_date', 'delivery_date'])));
 
         foreach ($keys as $meta_key) {
@@ -28,12 +31,12 @@ final class WooCommerceDeliveryDateProvider implements DeliveryDateProvider
             }
 
             try {
-                return new \DateTimeImmutable($value, new \DateTimeZone('UTC'));
+                return apply_filters('zion_eu_withdrawal_delivery_date', new \DateTimeImmutable($value, new \DateTimeZone('UTC')), $order);
             } catch (\Exception) {
                 continue;
             }
         }
 
-        return null;
+        return apply_filters('zion_eu_withdrawal_delivery_date', null, $order);
     }
 }

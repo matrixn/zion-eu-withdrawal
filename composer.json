@@ -1,7 +1,7 @@
 {
     "name": "zion3d/zion-eu-withdrawal",
     "description": "Professional EU withdrawal foundation for WooCommerce with a verified Romanian legal profile.",
-    "version": "1.0.2",
+    "version": "1.1.0",
     "type": "wordpress-plugin",
     "license": "GPL-2.0-or-later",
     "require": {
@@ -48,10 +48,20 @@
             "@php -l src/Admin/GuidePage.php",
             "@php -l src/Integration/WooCommerceRules.php",
             "@php -l src/Integration/WooCommerceCheckoutBlocksIntegration.php",
+            "@php -l zion-eu-withdrawal-pro.php",
+            "@php -l pro/src/ProPlugin.php",
+            "@php -l pro/src/Infrastructure/ProSettings.php",
+            "@php -l pro/src/Frontend/VisualCustomization.php",
+            "@php -l pro/src/Rules/AdvancedRulesEngine.php",
+            "@php -l pro/src/Delivery/DeliveryIntegration.php",
+            "@php -l pro/src/Webhooks/WebhookDispatcher.php",
+            "@php -l pro/src/Api/RestApi.php",
+            "@php -l pro/src/Admin/ProAdminPage.php",
             "@php -l src/Legal/EligibilityEngine.php",
             "@php -l tests/smoke/phase23-workflow.php",
             "@php -l tests/smoke/phase610-contract.php",
             "@php -l tests/smoke/phase610-runtime.php",
+            "@php -l tests/smoke/phase1112-pro.php",
             "@php -l tests/Unit/EligibilityEngineTest.php"
         ]
     },

@@ -45,7 +45,7 @@ if (interface_exists('Automattic\\WooCommerce\\Blocks\\Integrations\\Integration
 
         public function get_script_data()
         {
-            $settings = (array) get_option('zion_eu_withdrawal_settings', []);
+            $settings = (array) apply_filters('zion_eu_withdrawal_checkout_settings', get_option('zion_eu_withdrawal_settings', []));
 
             return [
                 'enabled' => ! empty($settings['checkout_disclosure_enabled']),

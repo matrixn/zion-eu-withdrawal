@@ -33,7 +33,7 @@ $engine = new Zion\EuWithdrawal\Legal\EligibilityEngine(
 $evaluation = $engine->evaluate_order($order, $items);
 
 if (($evaluation['do_not_block'] ?? false) !== true || ($evaluation['overall'] ?? '') !== 'unknown') {
-    WP_CLI::error('Unknown delivery date did not produce a non-blocking unknown evaluation.');
+    WP_CLI::error('Unknown delivery date did not produce a non-blocking unknown evaluation: ' . (string) wp_json_encode($evaluation));
 }
 
 update_post_meta($product->get_id(), '_zion_eu_withdrawal_exception_code', 'EXC-C');

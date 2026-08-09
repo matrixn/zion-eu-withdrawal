@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.0 — Phase 11–12 Pro add-on
+
+- Added the Pro add-on architecture over the existing Free/core plugin and database.
+- Added visual customization, floating placement, bilingual checkout copy and controlled custom CSS.
+- Added the Pro Rules Engine with product/category/tag/order/shipping/country conditions and indicative mixed-order evaluation.
+- Added delivery-date provider controls, delivered-status fallback, deadline dashboard, CSV export and signed withdrawal webhooks.
+- Added protected REST endpoints for health, withdrawal reporting and delivery-date updates.
+- Added agency/white-label controls and Pro smoke coverage.
+
 ## 1.0.2 — WooCommerce Checkout Blocks compatibility
 
 - Added official WooCommerce Checkout Blocks integration for the withdrawal disclosure.

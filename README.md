@@ -2,7 +2,7 @@
 
 Professional foundation for the EU consumer withdrawal workflow in WooCommerce.
 
-Phase 0 and Phase 1 provide legal traceability and the stable plugin skeleton. Phase 2 and Phase 3 add the public withdrawal page, order lookup, review and confirmed server-side submission flow. Phase 4 and Phase 5 add account history, administrative request management and expiring guest access links. Phase 6-10 add immutable notifications, indicative eligibility, checkout disclosure, operational administration and the Free QA matrix.
+Phase 0 and Phase 1 provide legal traceability and the stable plugin skeleton. Phase 2 and Phase 3 add the public withdrawal page, order lookup, review and confirmed server-side submission flow. Phase 4 and Phase 5 add account history, administrative request management and expiring guest access links. Phase 6-10 add immutable notifications, indicative eligibility, checkout disclosure, operational administration and the Free QA matrix. Phase 11-12 on `main` add the Pro add-on over the same core.
 
 ## Requirements
 
@@ -28,3 +28,14 @@ Git operations and deployment are run from Windows. Composer and WordPress tooli
 - The checkout disclosure supports both classic WooCommerce checkout hooks and the WooCommerce Checkout Block.
 - Administrators can search, filter, export CSV, update operational status, add internal notes, inspect audit history and resend notifications.
 - The release checklist is in `tests/QA/PHASE-10-MATRIX.md`.
+
+## Branches
+
+- `free` is the stable Free/core distribution and must not receive Pro-only code.
+- `main` is the Pro development and release branch. The Pro add-on lives in `pro/` and requires the core plugin.
+
+## Phase 11-12 Pro
+
+- Configure Pro from **EU Withdrawal → Pro · Control**.
+- Monitor deadlines and export operational data from **EU Withdrawal → Pro · Dashboard**.
+- The protected API uses `Authorization: Bearer <api-secret>` and the webhook signature is sent in `X-Zion-Signature`.

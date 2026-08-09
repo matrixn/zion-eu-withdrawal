@@ -39,6 +39,10 @@ final class WithdrawalsPage
         }
 
         $this->repository->update($id, $status, $notes);
+        $updated = $this->repository->find_by_id($id);
+        if (is_array($updated)) {
+            do_action('zion_eu_withdrawal_status_changed', $updated, $status);
+        }
         $this->audit->record($id, 'merchant_update', 'Status sau nota interna actualizata.', ['status' => $status], get_current_user_id());
         wp_send_json_success(['message' => $this->locale->text('Cererea a fost actualizata.', 'The request was updated.')]);
     }

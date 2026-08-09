@@ -39,7 +39,7 @@ final class EligibilityEngine
             ? 'potential_exception'
             : (in_array('unknown', $states, true) || $delivery === null ? 'unknown' : 'standard');
 
-        return [
+        return apply_filters('zion_eu_withdrawal_eligibility_evaluation', [
             'engine' => 'EligibilityEngine',
             'provider' => $this->delivery_dates->id(),
             'legal_profile' => $this->profile->version(),
@@ -49,7 +49,7 @@ final class EligibilityEngine
             'estimated_deadline' => $deadline?->format('Y-m-d H:i:s'),
             'do_not_block' => true,
             'items' => $evaluated,
-        ];
+        ], $order, $items);
     }
 
     /** @param array<string, mixed> $rule @return array<string, string|null> */

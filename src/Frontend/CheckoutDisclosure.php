@@ -55,7 +55,7 @@ final class CheckoutDisclosure
 
     public function thankyou(int $order_id): void
     {
-        $settings = (array) get_option('zion_eu_withdrawal_settings', []);
+        $settings = (array) apply_filters('zion_eu_withdrawal_checkout_settings', get_option('zion_eu_withdrawal_settings', []));
         if (empty($settings['order_confirmation_disclosure']) || $order_id < 1) {
             return;
         }
@@ -65,7 +65,7 @@ final class CheckoutDisclosure
 
     public function email_order_meta(mixed $order, bool $sent_to_admin, bool $plain_text, mixed $email): void
     {
-        $settings = (array) get_option('zion_eu_withdrawal_settings', []);
+        $settings = (array) apply_filters('zion_eu_withdrawal_checkout_settings', get_option('zion_eu_withdrawal_settings', []));
         if ($sent_to_admin || empty($settings['order_confirmation_disclosure']) || ! is_object($order)) {
             return;
         }
@@ -81,8 +81,9 @@ final class CheckoutDisclosure
 
     private function render_if_position(string $position): void
     {
-        $settings = (array) get_option('zion_eu_withdrawal_settings', []);
-        if ($this->rendered || empty($settings['checkout_disclosure_enabled']) || (string) ($settings['checkout_disclosure_position'] ?? 'before_submit') !== $position) {
+        $settings = (array) apply_filters('zion_eu_withdrawal_checkout_settings', get_option('zion_eu_withdrawal_settings', []));
+        $configured_position = (string) apply_filters('zion_eu_withdrawal_checkout_position', $settings['checkout_disclosure_position'] ?? 'before_submit');
+        if ($this->rendered || empty($settings['checkout_disclosure_enabled']) || $configured_position !== $position) {
             return;
         }
 
