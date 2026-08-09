@@ -1,0 +1,41 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Zion\EuWithdrawal\Admin;
+
+use Zion\EuWithdrawal\Internationalization\LocaleManager;
+use Zion\EuWithdrawal\Legal\LegalProfile;
+
+final class GuidePage
+{
+    public function __construct(
+        private readonly LocaleManager $locale,
+        private readonly LegalProfile $profile
+    ) {
+    }
+
+    public function register_menu(): void
+    {
+        add_submenu_page(
+            'zion-eu-withdrawal',
+            $this->locale->text('Cum funcționează', 'How it works'),
+            $this->locale->text('Cum funcționează', 'How it works'),
+            'manage_options',
+            'zion-eu-withdrawal-guide',
+            [$this, 'render']
+        );
+    }
+
+    public function render(): void
+    {
+        ?>
+        <div class="wrap zion-eu-admin"><div class="zion-eu-topbar"><a class="zion-eu-brand" href="<?php echo esc_url(admin_url('admin.php?page=zion-eu-withdrawal')); ?>"><span class="zion-eu-brand-mark">Z</span><span><strong>Zion</strong><small>EU Withdrawal</small></span></a><span class="zion-eu-version">v<?php echo esc_html(ZION_EU_WITHDRAWAL_VERSION); ?></span></div><main class="zion-eu-content">
+        <section class="zion-eu-guide-hero zion-eu-card"><span class="zion-eu-eyebrow"><?php echo esc_html($this->locale->text('Ghid operațional', 'Operational guide')); ?></span><h1><?php echo esc_html($this->locale->text('Cum funcționează Zion EU Withdrawal', 'How Zion EU Withdrawal works')); ?></h1><p><?php echo esc_html($this->locale->text('Fluxul separă identificarea, declarația și confirmarea pentru ca dovada transmisă să fie clară, verificabilă și ușor de administrat.', 'The flow separates identification, statement and confirmation so the submitted evidence is clear, verifiable and easy to administer.')); ?></p></section>
+        <div class="zion-eu-guide-grid"><section class="zion-eu-card"><div class="zion-eu-card-heading"><span class="zion-eu-icon">01</span><h2><?php echo esc_html($this->locale->text('Client autentificat', 'Logged-in customer')); ?></h2></div><ol class="zion-eu-guide-steps"><li><?php echo esc_html($this->locale->text('Clientul deschide comanda din Contul meu.', 'The customer opens an order from My Account.')); ?></li><li><?php echo esc_html($this->locale->text('Apasă Retragere din contract.', 'They click Withdraw from contract.')); ?></li><li><?php echo esc_html($this->locale->text('Verifică datele, scrie observații opționale și revizuiește declarația.', 'They verify details, add optional notes and review the statement.')); ?></li><li><?php echo esc_html($this->locale->text('Confirmă explicit. Sistemul salvează ID-ul, timestamp-ul și snapshot-ul.', 'They explicitly confirm. The system saves the ID, timestamp and snapshot.')); ?></li></ol></section><section class="zion-eu-card"><div class="zion-eu-card-heading"><span class="zion-eu-icon">02</span><h2><?php echo esc_html($this->locale->text('Client fără cont', 'Guest customer')); ?></h2></div><ol class="zion-eu-guide-steps"><li><?php echo esc_html($this->locale->text('Clientul cere un link securizat folosind numărul comenzii și e-mailul.', 'The customer requests a secure link using the order number and e-mail.')); ?></li><li><?php echo esc_html($this->locale->text('Primește un token unic, cu expirare, pe e-mail.', 'They receive a unique, expiring token by e-mail.')); ?></li><li><?php echo esc_html($this->locale->text('Linkul deschide pagina de retragere fără a expune datele comenzii.', 'The link opens the withdrawal page without exposing order data.')); ?></li><li><?php echo esc_html($this->locale->text('O nouă cerere de link revocă tokenul anterior.', 'A new link request revokes the previous token.')); ?></li></ol></section></div>
+        <section class="zion-eu-card zion-eu-guide-flow"><div class="zion-eu-card-heading"><span class="zion-eu-icon">↗</span><h2><?php echo esc_html($this->locale->text('Ce se întâmplă după confirmare', 'What happens after confirmation')); ?></h2></div><div class="zion-eu-guide-timeline"><div><span>1</span><strong><?php echo esc_html($this->locale->text('Persistare', 'Persist')); ?></strong><p><?php echo esc_html($this->locale->text('Declarația și snapshot-ul sunt salvate în baza de date.', 'The statement and snapshot are saved in the database.')); ?></p></div><div><span>2</span><strong><?php echo esc_html($this->locale->text('Identificare', 'Identify')); ?></strong><p><?php echo esc_html($this->locale->text('ID-ul unic permite găsirea cererii în registrul administrativ.', 'The unique ID lets you find the request in the admin register.')); ?></p></div><div><span>3</span><strong><?php echo esc_html($this->locale->text('Procesare', 'Process')); ?></strong><p><?php echo esc_html($this->locale->text('Comerciantul decide operațional ce urmează; pluginul nu aprobă, respinge sau rambursează automat.', 'The merchant decides what happens operationally; the plugin does not automatically approve, reject or refund.')); ?></p></div></div></section>
+        <div class="zion-eu-guide-grid"><section class="zion-eu-card"><div class="zion-eu-card-heading"><span class="zion-eu-icon">✓</span><h2><?php echo esc_html($this->locale->text('Ce trebuie administrat', 'What needs administration')); ?></h2></div><ul class="zion-eu-admin-checklist"><li><?php echo esc_html($this->locale->text('Verifică periodic e-mailul tranzacțional și SMTP-ul magazinului.', 'Periodically verify transactional e-mail and the store SMTP.')); ?></li><li><?php echo esc_html($this->locale->text('Revizuiește profilul juridic și sursele înainte de release.', 'Review the legal profile and sources before each release.')); ?></li><li><?php echo esc_html($this->locale->text('Folosește registrul Cereri de retragere pentru procesarea internă.', 'Use the Withdrawal requests register for internal processing.')); ?></li><li><?php echo esc_html($this->locale->text('Definește procedura de retur și rambursare în afara pluginului.', 'Define return and refund procedures outside the plugin.')); ?></li><li><?php echo esc_html($this->locale->text('Documentează politica GDPR, retenția și accesul echipei.', 'Document GDPR policy, retention and team access.')); ?></li></ul></section><section class="zion-eu-card zion-eu-side-card zion-eu-side-card--dark"><span class="zion-eu-eyebrow"><?php echo esc_html($this->locale->text('Profil activ', 'Active profile')); ?></span><h2><?php echo esc_html($this->profile->version()); ?></h2><p><?php echo esc_html($this->locale->text('Phase 4–5 oferă accesul pentru clienți autentificați și guest. Eligibilitatea juridică avansată și notificările comerciale rămân extensii separate.', 'Phase 4–5 provides logged-in and guest access. Advanced legal eligibility and commercial notifications remain separate extensions.')); ?></p><a class="zion-eu-guide-link" href="<?php echo esc_url(admin_url('admin.php?page=zion-eu-withdrawal-settings')); ?>"><?php echo esc_html($this->locale->text('Deschide setările', 'Open settings')); ?> →</a></section></div>
+        </main><footer class="zion-eu-footer"><span>© <?php echo esc_html((string) gmdate('Y')); ?> Zion3D</span><span><?php echo esc_html($this->locale->text('Ghid Phase 0–5', 'Phase 0–5 guide')); ?></span></footer></div>
+        <?php
+    }
+}

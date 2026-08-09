@@ -25,5 +25,6 @@ final class Uninstaller
 
         delete_option('zion_eu_withdrawal_settings');
         delete_option('zion_eu_withdrawal_db_version');
+        delete_option('zion_eu_withdrawal_rewrite_version');
     }
 }

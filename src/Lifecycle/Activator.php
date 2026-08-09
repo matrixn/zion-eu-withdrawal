@@ -18,6 +18,8 @@ final class Activator
         $database->create_tables();
         update_option('zion_eu_withdrawal_db_version', Database::DB_VERSION, false);
         add_option('zion_eu_withdrawal_settings', self::defaults(), '', false);
+        add_rewrite_endpoint('retrageri', EP_ROOT | EP_PAGES);
+        flush_rewrite_rules();
     }
 
     /** @return array<string, mixed> */
@@ -37,9 +39,11 @@ final class Activator
             'rate_limit_per_hour' => 5,
             'no_cache_sensitive_pages' => 1,
             'captcha_mode' => 'none',
+            'guest_link_ttl_minutes' => 30,
             'send_consumer_email' => 1,
             'send_admin_email' => 1,
             'admin_email' => '',
+            'guest_email_subject' => 'Link securizat pentru retragerea din contract',
             'accent_color' => '#f97316',
             'delete_data_on_uninstall' => 0,
         ];

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Zion\EuWithdrawal\Admin;
 
 use Zion\EuWithdrawal\Integration\WooCommerceDetector;
+use Zion\EuWithdrawal\Infrastructure\WithdrawalRepository;
 use Zion\EuWithdrawal\Internationalization\LocaleManager;
 use Zion\EuWithdrawal\Legal\LegalProfile;
 
@@ -16,7 +17,8 @@ final class SettingsPage
         private readonly object $database,
         private readonly LegalProfile $profile,
         private readonly WooCommerceDetector $woocommerce,
-        private readonly LocaleManager $locale
+        private readonly LocaleManager $locale,
+        private readonly WithdrawalRepository $repository
     ) {
     }
 
@@ -96,7 +98,7 @@ final class SettingsPage
                 <p><?php echo esc_html($this->locale->text('O fundație WooCommerce construită în jurul unei experiențe calme pentru client și a unei evidențe juridice verificabile pentru comerciant.', 'A WooCommerce foundation built around a calm customer experience and verifiable legal evidence for the merchant.')); ?></p>
                 <div class="zion-eu-hero-actions">
                     <a class="zion-eu-button zion-eu-button--primary" href="<?php echo esc_url(admin_url('admin.php?page=zion-eu-withdrawal-settings')); ?>"><?php echo esc_html($this->locale->text('Configurează fundația', 'Configure the foundation')); ?></a>
-                    <span class="zion-eu-status-dot"><span></span><?php echo esc_html($this->locale->text('Autosave AJAX activ', 'AJAX autosave active')); ?></span>
+                    <a class="zion-eu-text-link" href="<?php echo esc_url(admin_url('admin.php?page=zion-eu-withdrawal-requests')); ?>"><?php echo esc_html($this->locale->text('Vezi cererile', 'View requests')); ?> →</a>
                 </div>
             </section>
 
@@ -140,8 +142,7 @@ final class SettingsPage
         $this->render_header('settings');
         ?>
         <section class="zion-eu-settings-intro zion-eu-card">
-            <div><span class="zion-eu-eyebrow"><?php echo esc_html($this->locale->text('Centrul de control', 'Control centre')); ?></span><h1><?php echo esc_html($this->locale->text('Setări care se salvează singure', 'Settings that save themselves')); ?></h1><p><?php echo esc_html($this->locale->text('Modifică o opțiune și vei primi confirmarea lângă ea. Nu există un buton global de salvare care să te lase să ghicești dacă ai pierdut ceva.', 'Change an option and you will receive confirmation next to it. There is no global save button leaving you to wonder whether something was lost.')); ?></p></div>
-            <div class="zion-eu-autosave-badge"><span>●</span><?php echo esc_html($this->locale->text('Salvare automată', 'Automatic saving')); ?><small>AJAX</small></div>
+            <div><span class="zion-eu-eyebrow"><?php echo esc_html($this->locale->text('Centrul de control', 'Control centre')); ?></span><h1><?php echo esc_html($this->locale->text('Setări clare pentru magazin', 'Clear store settings')); ?></h1><p><?php echo esc_html($this->locale->text('Modifică o opțiune și primești confirmarea lângă setarea respectivă. Fiecare câmp este documentat pentru utilizare operațională.', 'Change an option and receive confirmation next to that setting. Every field is documented for operational use.')); ?></p></div>
         </section>
         <div class="zion-eu-settings-layout">
             <div class="zion-eu-settings-main">
@@ -180,9 +181,11 @@ final class SettingsPage
             'rate_limit_per_hour' => ['section' => 'security', 'type' => 'number', 'min' => 1, 'max' => 100, 'ro' => 'Limită cereri per e-mail / oră', 'en' => 'Requests per e-mail / hour', 'description_ro' => 'Limită de protecție împotriva enumerării comenzilor și spamului pentru fluxurile publice.', 'description_en' => 'Protection limit against order enumeration and spam in public flows.'],
             'no_cache_sensitive_pages' => ['section' => 'security', 'type' => 'checkbox', 'ro' => 'Marchează paginile sensibile ca no-cache', 'en' => 'Mark sensitive pages as no-cache', 'description_ro' => 'Solicită excluderea din cache pentru paginile care vor conține date despre retrageri.', 'description_en' => 'Requests cache exclusion for pages that will contain withdrawal data.'],
             'captcha_mode' => ['section' => 'security', 'type' => 'select', 'options' => ['none' => ['ro' => 'Dezactivat', 'en' => 'Disabled'], 'native' => ['ro' => 'Pregătit pentru CAPTCHA', 'en' => 'CAPTCHA-ready']], 'ro' => 'Protecție anti-spam', 'en' => 'Anti-spam protection', 'description_ro' => 'Controlează integrarea anti-spam. Providerul CAPTCHA nu este inclus în Phase 1, pentru a evita o dependență externă inutilă.', 'description_en' => 'Controls anti-spam integration. A CAPTCHA provider is not bundled in Phase 1 to avoid an unnecessary external dependency.'],
+            'guest_link_ttl_minutes' => ['section' => 'security', 'type' => 'number', 'min' => 5, 'max' => 1440, 'ro' => 'Valabilitate link guest (minute)', 'en' => 'Guest link validity (minutes)', 'description_ro' => 'Cât timp rămâne valid linkul securizat trimis clientului fără cont. O cerere nouă revocă linkul anterior.', 'description_en' => 'How long the secure link sent to a guest remains valid. A new request revokes the previous link.'],
             'send_consumer_email' => ['section' => 'notifications', 'type' => 'checkbox', 'ro' => 'Confirmare e-mail către client', 'en' => 'Consumer confirmation e-mail', 'description_ro' => 'Pregătește trimiterea unei dovezi către client după transmiterea retragerii, cu snapshot-ul conținutului.', 'description_en' => 'Prepares a customer proof message after submission, with a content snapshot.'],
             'send_admin_email' => ['section' => 'notifications', 'type' => 'checkbox', 'ro' => 'Notificare e-mail către comerciant', 'en' => 'Merchant notification e-mail', 'description_ro' => 'Pregătește notificarea internă cu ID-ul retragerii, data, ora și comanda identificată.', 'description_en' => 'Prepares an internal notification with withdrawal ID, date, time and identified order.'],
             'admin_email' => ['section' => 'notifications', 'type' => 'email', 'ro' => 'E-mail administrator pentru notificări', 'en' => 'Administrator e-mail for notifications', 'description_ro' => 'Adresa destinatarului intern. Dacă este goală, Phase 3 va folosi adresa de administrare WordPress.', 'description_en' => 'Internal recipient address. If empty, Phase 3 will use the WordPress administration address.'],
+            'guest_email_subject' => ['section' => 'notifications', 'type' => 'text', 'ro' => 'Subiect e-mail link securizat', 'en' => 'Secure link e-mail subject', 'description_ro' => 'Subiectul e-mailului trimis când un client guest solicită acces la formularul de retragere.', 'description_en' => 'Subject used when a guest customer requests access to the withdrawal form.'],
             'accent_color' => ['section' => 'appearance', 'type' => 'color', 'ro' => 'Culoare accent portocaliu', 'en' => 'Orange accent colour', 'description_ro' => 'Culoarea folosită pentru acțiuni, indicatori de stare și elementele de orientare vizuală.', 'description_en' => 'Colour used for actions, status indicators and visual orientation elements.'],
             'delete_data_on_uninstall' => ['section' => 'appearance', 'type' => 'checkbox', 'ro' => 'Șterge datele la dezinstalare', 'en' => 'Delete data on uninstall', 'description_ro' => 'Implicit dezactivat. Activează doar dacă vrei ca tabelele și setările să fie șterse la dezinstalarea pluginului.', 'description_en' => 'Disabled by default. Enable only if tables and settings should be removed during uninstall.'],
         ];
@@ -252,11 +255,13 @@ final class SettingsPage
     /** @return array<int, array<string, string>> */
     private function overview_stats(): array
     {
+        $stats = $this->repository->statistics();
+
         return [
-            ['value' => '14', 'label' => $this->locale->text('zile standard', 'standard days'), 'description' => $this->locale->text('Termen explicit în profilul RO.', 'Explicit in the RO profile.')],
-            ['value' => '13', 'label' => $this->locale->text('excepții documentate', 'documented exceptions'), 'description' => $this->locale->text('EXC-A până la EXC-M, fără scurtături.', 'EXC-A through EXC-M, no shortcuts.')],
-            ['value' => '100%', 'label' => 'AJAX / autosave', 'description' => $this->locale->text('Setările oferă feedback local.', 'Settings provide local feedback.')],
-            ['value' => 'RO + EN', 'label' => $this->locale->text('limbi pregătite', 'languages ready'), 'description' => $this->locale->text('Româna este limba implicită.', 'Romanian is the default.')],
+            ['value' => (string) $stats['total'], 'label' => $this->locale->text('cereri totale', 'total requests'), 'description' => $this->locale->text('Declarații confirmate și salvate.', 'Confirmed and saved statements.')],
+            ['value' => (string) $stats['last_30_days'], 'label' => $this->locale->text('în ultimele 30 zile', 'in the last 30 days'), 'description' => $this->locale->text('Activitate recentă în registru.', 'Recent register activity.')],
+            ['value' => (string) $stats['guest'], 'label' => $this->locale->text('cereri guest', 'guest requests'), 'description' => $this->locale->text('Transmise fără cont de client.', 'Submitted without a customer account.')],
+            ['value' => (string) $stats['account'], 'label' => $this->locale->text('cereri autentificate', 'logged-in requests'), 'description' => $this->locale->text('Transmise din Contul meu.', 'Submitted from My Account.')],
         ];
     }
 

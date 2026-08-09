@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Zion\EuWithdrawal\Frontend;
 
-use Zion\EuWithdrawal\Infrastructure\Database;
+use Zion\EuWithdrawal\Infrastructure\GuestTokenRepository;
 use Zion\EuWithdrawal\Infrastructure\WithdrawalRepository;
 use Zion\EuWithdrawal\Internationalization\LocaleManager;
 use Zion\EuWithdrawal\Legal\LegalProfile;
@@ -16,6 +16,8 @@ final class WithdrawalFlow
     public function __construct(
         private readonly OrderLookup $orders,
         private readonly WithdrawalRepository $repository,
+        private readonly GuestTokenRepository $guest_tokens,
+        private readonly PageManager $pages,
         private readonly LegalProfile $profile,
         private readonly LocaleManager $locale
     ) {
@@ -27,6 +29,44 @@ final class WithdrawalFlow
         add_action('wp_ajax_nopriv_zion_eu_begin_withdrawal', [$this, 'ajax_begin']);
         add_action('wp_ajax_zion_eu_confirm_withdrawal', [$this, 'ajax_confirm']);
         add_action('wp_ajax_nopriv_zion_eu_confirm_withdrawal', [$this, 'ajax_confirm']);
+        add_action('wp_ajax_zion_eu_request_guest_link', [$this, 'ajax_request_guest_link']);
+        add_action('wp_ajax_nopriv_zion_eu_request_guest_link', [$this, 'ajax_request_guest_link']);
+    }
+
+    public function ajax_request_guest_link(): void
+    {
+        check_ajax_referer('zion_eu_public_withdrawal', 'nonce');
+
+        $email = sanitize_email((string) wp_unslash($_POST['customer_email'] ?? ''));
+        $reference = sanitize_text_field((string) wp_unslash($_POST['order_reference'] ?? ''));
+        $generic = $this->locale->text(
+            'Dacă datele corespund unei comenzi, vei primi în scurt timp un link securizat pe e-mail.',
+            'If the details match an order, you will receive a secure link by e-mail shortly.'
+        );
+
+        if (! is_email($email) || $reference === '' || ! $this->within_rate_limit($email)) {
+            wp_send_json_success(['message' => $generic]);
+        }
+
+        $order = $this->orders->find($reference, $email, null);
+        if (! $order) {
+            wp_send_json_success(['message' => $generic]);
+        }
+
+        $this->guest_tokens->revoke_for_order((int) $order->get_id(), $email);
+        $raw_token = wp_generate_password(64, false, false);
+        $settings = (array) get_option('zion_eu_withdrawal_settings', []);
+        $ttl_minutes = max(5, min(1440, (int) ($settings['guest_link_ttl_minutes'] ?? 30)));
+        $expires_at = gmdate('Y-m-d H:i:s', time() + ($ttl_minutes * MINUTE_IN_SECONDS));
+        $this->guest_tokens->create($raw_token, (int) $order->get_id(), $email, $expires_at);
+        $link = add_query_arg('guest_token', rawurlencode($raw_token), $this->pages->public_url());
+        $subject = sanitize_text_field((string) ($settings['guest_email_subject'] ?? 'Secure withdrawal link'));
+        $body = $this->locale->text(
+            "Ai solicitat un link securizat pentru retragerea din contract.\n\nDeschide linkul pentru a continua:\n{$link}\n\nLinkul expiră la {$expires_at} UTC și o cerere nouă revocă linkul anterior.",
+            "You requested a secure link to withdraw from a contract.\n\nOpen the link to continue:\n{$link}\n\nThe link expires at {$expires_at} UTC and a new request revokes the previous link."
+        );
+        wp_mail($email, $subject, $body);
+        wp_send_json_success(['message' => $generic]);
     }
 
     public function ajax_begin(): void
@@ -41,7 +81,20 @@ final class WithdrawalFlow
         $email = sanitize_email((string) wp_unslash($_POST['customer_email'] ?? ''));
         $phone = sanitize_text_field((string) wp_unslash($_POST['customer_phone'] ?? ''));
         $reference = sanitize_text_field((string) wp_unslash($_POST['order_reference'] ?? ''));
+        $guest_token = sanitize_text_field((string) wp_unslash($_POST['guest_token'] ?? ''));
         $user_id = is_user_logged_in() ? get_current_user_id() : null;
+
+        $guest_row = $guest_token !== '' ? $this->guest_tokens->find($guest_token) : null;
+        if ($guest_token !== '' && ! $guest_row) {
+            $this->error($this->locale->text('Linkul securizat a expirat. Solicită unul nou.', 'The secure link expired. Request a new one.'), 410);
+        }
+
+        if (is_array($guest_row)) {
+            $reference = (string) $guest_row['order_id'];
+            $guest_order = wc_get_order((int) $guest_row['order_id']);
+            $email = $email !== '' ? $email : (string) ($guest_order ? $guest_order->get_billing_email() : '');
+            $name = $name !== '' ? $name : (string) ($guest_order && method_exists($guest_order, 'get_formatted_billing_full_name') ? $guest_order->get_formatted_billing_full_name() : '');
+        }
 
         if ($name === '' || ! is_email($email) || $reference === '') {
             $this->error($this->locale->text('Completează câmpurile obligatorii pentru a continua.', 'Complete the required fields to continue.'), 422);
@@ -66,7 +119,8 @@ final class WithdrawalFlow
             'customer_phone' => $phone,
             'order_reference' => (string) $order->get_order_number(),
             'statement' => '',
-            'source' => $user_id ? 'account' : 'public',
+            'source' => is_array($guest_row) ? 'guest' : ($user_id ? 'account' : 'public'),
+            'guest_token' => $guest_token,
             'items' => $items,
             'created_at' => time(),
         ];
@@ -117,6 +171,9 @@ final class WithdrawalFlow
                 'created_at' => $now,
             ]);
             $this->repository->create_items($row_id, $review['items']);
+            if (! empty($review['guest_token'])) {
+                $this->guest_tokens->mark_used((string) $review['guest_token']);
+            }
         } catch (\Throwable $exception) {
             $this->error($this->locale->text('Declarația nu a putut fi salvată. Nu reîncărca pagina și încearcă din nou.', 'The statement could not be saved. Do not reload the page and try again.'), 500);
         }

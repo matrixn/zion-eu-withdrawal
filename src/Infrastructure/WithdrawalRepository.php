@@ -71,4 +71,106 @@ final class WithdrawalRepository
     {
         return 'ZWE-' . gmdate('Ymd') . '-' . strtoupper(wp_generate_password(8, false, false));
     }
+
+    /** @return array<int, array<string, mixed>> */
+    public function all(string $status = '', int $limit = 50, int $offset = 0): array
+    {
+        global $wpdb;
+
+        $table = $this->database->table_names()['withdrawals'];
+        $limit = max(1, min(200, $limit));
+        $offset = max(0, $offset);
+        $where = '';
+        $args = [];
+
+        if ($status !== '') {
+            $where = ' WHERE status = %s';
+            $args[] = $status;
+        }
+
+        $args[] = $limit;
+        $args[] = $offset;
+        $query = "SELECT * FROM {$table}{$where} ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d";
+
+        return (array) $wpdb->get_results($wpdb->prepare($query, $args), ARRAY_A);
+    }
+
+    public function count(string $status = ''): int
+    {
+        global $wpdb;
+
+        $table = $this->database->table_names()['withdrawals'];
+        if ($status === '') {
+            return (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table}");
+        }
+
+        return (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$table} WHERE status = %s", $status));
+    }
+
+    /** @return array<string, mixed>|null */
+    public function find_for_user(string $withdrawal_id, int $user_id): ?array
+    {
+        global $wpdb;
+
+        $row = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$this->database->table_names()['withdrawals']} WHERE withdrawal_id = %s AND user_id = %d LIMIT 1",
+            $withdrawal_id,
+            $user_id
+        ), ARRAY_A);
+
+        return is_array($row) ? $row : null;
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    public function for_user(int $user_id, int $limit = 50, int $offset = 0): array
+    {
+        global $wpdb;
+
+        $limit = max(1, min(100, $limit));
+        return (array) $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM {$this->database->table_names()['withdrawals']} WHERE user_id = %d ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d",
+            $user_id,
+            $limit,
+            max(0, $offset)
+        ), ARRAY_A);
+    }
+
+    /** @return array<string, mixed>|null */
+    public function find_by_id(int $id): ?array
+    {
+        global $wpdb;
+
+        $row = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$this->database->table_names()['withdrawals']} WHERE id = %d LIMIT 1",
+            $id
+        ), ARRAY_A);
+
+        return is_array($row) ? $row : null;
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    public function items_for(int $withdrawal_id): array
+    {
+        global $wpdb;
+
+        return (array) $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM {$this->database->table_names()['items']} WHERE withdrawal_id = %d ORDER BY id ASC",
+            $withdrawal_id
+        ), ARRAY_A);
+    }
+
+    /** @return array<string, int|string> */
+    public function statistics(): array
+    {
+        global $wpdb;
+
+        $table = $this->database->table_names()['withdrawals'];
+        return [
+            'total' => $this->count(),
+            'last_30_days' => (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$table} WHERE created_at >= %s", gmdate('Y-m-d H:i:s', time() - (30 * DAY_IN_SECONDS)))),
+            'guest' => (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$table} WHERE source IN (%s, %s)", 'guest', 'public')),
+            'account' => (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$table} WHERE source = %s", 'account')),
+            'latest' => (string) ($wpdb->get_var("SELECT created_at FROM {$table} ORDER BY created_at DESC LIMIT 1") ?: '-'),
+        ];
+    }
 }

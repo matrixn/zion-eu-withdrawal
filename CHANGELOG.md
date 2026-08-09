@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.0 — Phase 4–5 account and guest access
+
+- Added the WooCommerce My Account `Withdrawals` endpoint with history and detail views.
+- Added the admin Withdrawal Requests register with request details and immutable snapshots.
+- Added expiring guest access tokens, token revocation/regeneration and secure e-mail links.
+- Added generic guest-link responses to reduce order enumeration risk.
+- Replaced overview feature cards with live withdrawal statistics.
+- Added the operational How it works guide and administration checklist.
+
 ## 0.3.0 — Phase 2–3 withdrawal flow
 
 - Added an automatically created withdrawal page with shortcode and Gutenberg block.

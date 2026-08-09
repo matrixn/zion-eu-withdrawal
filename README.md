@@ -2,7 +2,7 @@
 
 Professional foundation for the EU consumer withdrawal workflow in WooCommerce.
 
-Phase 0 and Phase 1 provide legal traceability and the stable plugin skeleton. Phase 2 and Phase 3 add the public withdrawal page, order lookup, review and confirmed server-side submission flow. Notifications, customer-account history and advanced eligibility rules remain later phases.
+Phase 0 and Phase 1 provide legal traceability and the stable plugin skeleton. Phase 2 and Phase 3 add the public withdrawal page, order lookup, review and confirmed server-side submission flow. Phase 4 and Phase 5 add account history, administrative request management and expiring guest access links.
 
 ## Requirements
 

@@ -76,13 +76,17 @@
 
     const identifyForm = app.querySelector('[data-zion-form="identify"]');
     if (identifyForm) {
-        const prefill = app.dataset.prefillOrder || '';
+        const prefill = app.dataset.prefillOrder || app.dataset.guestOrder || '';
         if (prefill) identifyForm.elements.order_reference.value = prefill;
+        if (app.dataset.guestName) identifyForm.elements.customer_name.value = app.dataset.guestName;
+        if (app.dataset.guestEmail) identifyForm.elements.customer_email.value = app.dataset.guestEmail;
         identifyForm.addEventListener('submit', function (event) {
             event.preventDefault();
             feedback('identify', '');
             setBusy(identifyForm, true, strings.loading);
-            request('zion_eu_begin_withdrawal', formValues(identifyForm)).then(function (response) {
+            const identifyValues = formValues(identifyForm);
+            identifyValues.guest_token = app.dataset.guestToken || '';
+            request('zion_eu_begin_withdrawal', identifyValues).then(function (response) {
                 if (!response || !response.success) throw new Error(response && response.data && response.data.message ? response.data.message : (strings.genericError || 'Could not process the request.'));
                 const values = formValues(identifyForm);
                 reviewToken = response.data.review_token;
@@ -93,6 +97,20 @@
                 showStep(2);
             }).catch(function (error) { feedback('identify', error.message || strings.genericError, true); }).finally(function () { setBusy(identifyForm, false); });
         });
+        const guestButton = identifyForm.querySelector('[data-request-guest-link]');
+        if (guestButton) {
+            guestButton.addEventListener('click', function () {
+                const values = formValues(identifyForm);
+                const target = identifyForm.querySelector('[data-guest-feedback]');
+                guestButton.disabled = true;
+                if (target) target.textContent = strings.guestLinkSending || 'Sending…';
+                request('zion_eu_request_guest_link', { customer_email: values.customer_email || '', order_reference: values.order_reference || '' }).then(function (response) {
+                    if (target) target.textContent = response && response.data && response.data.message ? response.data.message : (strings.guestLinkGeneric || 'If the details match, an e-mail will arrive shortly.');
+                }).catch(function () {
+                    if (target) target.textContent = strings.guestLinkGeneric || 'If the details match, an e-mail will arrive shortly.';
+                }).finally(function () { guestButton.disabled = false; });
+            });
+        }
     }
 
     const statementForm = app.querySelector('[data-zion-form="statement"]');

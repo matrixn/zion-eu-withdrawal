@@ -5,13 +5,15 @@ declare(strict_types=1);
 namespace Zion\EuWithdrawal\Frontend;
 
 use Zion\EuWithdrawal\Internationalization\LocaleManager;
+use Zion\EuWithdrawal\Infrastructure\GuestTokenRepository;
 use Zion\EuWithdrawal\Legal\LegalProfile;
 
 final class PageManager
 {
     public function __construct(
         private readonly LocaleManager $locale,
-        private readonly LegalProfile $profile
+        private readonly LegalProfile $profile,
+        private readonly GuestTokenRepository $guest_tokens
     ) {
     }
 
@@ -65,7 +67,8 @@ final class PageManager
 
     public function enqueue_assets(): void
     {
-        if (! is_singular() || ! $this->page_contains_shortcode()) {
+        $account_page = function_exists('is_account_page') && is_account_page();
+        if ((! is_singular() || ! $this->page_contains_shortcode()) && ! $account_page) {
             return;
         }
 
@@ -85,6 +88,19 @@ final class PageManager
         $prefill = '';
         $order_id = absint(wp_unslash($_GET['order_id'] ?? 0));
         $token = sanitize_text_field(wp_unslash($_GET['zion_token'] ?? ''));
+        $guest_token = sanitize_text_field(wp_unslash($_GET['guest_token'] ?? ''));
+        $guest_prefill = ['name' => '', 'email' => '', 'order' => ''];
+        $guest_row = $guest_token !== '' ? $this->guest_tokens->find($guest_token) : null;
+        if (is_array($guest_row) && function_exists('wc_get_order')) {
+            $guest_order = wc_get_order((int) $guest_row['order_id']);
+            if ($guest_order) {
+                $guest_prefill = [
+                    'name' => method_exists($guest_order, 'get_formatted_billing_full_name') ? (string) $guest_order->get_formatted_billing_full_name() : '',
+                    'email' => (string) $guest_order->get_billing_email(),
+                    'order' => (string) $guest_order->get_order_number(),
+                ];
+            }
+        }
 
         if ($order_id > 0 && $token !== '' && wp_verify_nonce($token, 'zion_eu_order_' . $order_id)) {
             $prefill = (string) $order_id;
@@ -92,12 +108,12 @@ final class PageManager
 
         ob_start();
         ?>
-        <section class="zion-eu-withdrawal-app" data-zion-withdrawal-app data-prefill-order="<?php echo esc_attr($prefill); ?>" aria-labelledby="zion-eu-withdrawal-title">
+        <section class="zion-eu-withdrawal-app" data-zion-withdrawal-app data-prefill-order="<?php echo esc_attr($prefill); ?>" data-guest-token="<?php echo esc_attr($guest_token); ?>" data-guest-name="<?php echo esc_attr($guest_prefill['name']); ?>" data-guest-email="<?php echo esc_attr($guest_prefill['email']); ?>" data-guest-order="<?php echo esc_attr($guest_prefill['order']); ?>" aria-labelledby="zion-eu-withdrawal-title">
             <div class="zion-eu-withdrawal-brand"><span class="zion-eu-withdrawal-mark">Z</span><span><strong><?php echo esc_html($this->locale->text('Retragere UE', 'EU Withdrawal')); ?></strong><small><?php echo esc_html($this->profile->version()); ?></small></span></div>
             <div class="zion-eu-withdrawal-progress" aria-label="<?php echo esc_attr($this->locale->text('Pașii retragerii', 'Withdrawal steps')); ?>"><span class="is-active" data-progress="1">01</span><i></i><span data-progress="2">02</span><i></i><span data-progress="3">03</span></div>
             <header class="zion-eu-withdrawal-intro"><span class="zion-eu-withdrawal-eyebrow"><?php echo esc_html($this->locale->text('Dreptul tău, transmis clar', 'Your right, clearly submitted')); ?></span><h1 id="zion-eu-withdrawal-title"><?php echo esc_html($this->locale->text('Retragere din contract', 'Withdrawal from a contract')); ?></h1><p><?php echo esc_html($this->locale->text('Folosește acest formular pentru a transmite comerciantului o declarație neechivocă de retragere. Nu trebuie să explici motivul.', 'Use this form to send the merchant an unambiguous withdrawal statement. You do not need to give a reason.')); ?></p></header>
             <div class="zion-eu-withdrawal-legal-note"><span>i</span><p><?php echo esc_html($this->locale->text('Termenul standard este de 14 zile, cu regulile de început și excepțiile prevăzute în profilul juridic RO. Trimiterea nu este o cerere care necesită aprobare.', 'The standard period is 14 days, subject to the start-date rules and exceptions in the RO legal profile. Submission is not a request requiring approval.')); ?></p></div>
-            <div class="zion-eu-withdrawal-step is-active" data-step="1"><div class="zion-eu-step-heading"><span>01</span><div><h2><?php echo esc_html($this->locale->text('Identifică persoana și contractul', 'Identify the person and contract')); ?></h2><p><?php echo esc_html($this->locale->text('Folosim aceste date doar pentru a găsi în siguranță contractul indicat.', 'We use these details only to securely locate the indicated contract.')); ?></p></div></div><form data-zion-form="identify"><div class="zion-eu-form-grid"><label><span><?php echo esc_html($this->locale->text('Nume complet', 'Full name')); ?> *</span><small><?php echo esc_html($this->locale->text('Numele consumatorului din contract.', 'Consumer name on the contract.')); ?></small><input name="customer_name" required autocomplete="name"></label><label><span><?php echo esc_html($this->locale->text('E-mail', 'E-mail')); ?> *</span><small><?php echo esc_html($this->locale->text('Adresa asociată comenzii.', 'Address associated with the order.')); ?></small><input name="customer_email" type="email" required autocomplete="email"></label><label><span><?php echo esc_html($this->locale->text('Telefon', 'Phone')); ?></span><small><?php echo esc_html($this->locale->text('Opțional, pentru referință.', 'Optional, for reference.')); ?></small><input name="customer_phone" type="tel" autocomplete="tel"></label><label><span><?php echo esc_html($this->locale->text('Număr comandă / contract', 'Order / contract number')); ?> *</span><small><?php echo esc_html($this->locale->text('Nu folosi datele cardului sau parola.', 'Do not use card details or a password.')); ?></small><input name="order_reference" required inputmode="numeric"></label></div><button class="zion-eu-withdrawal-button" type="submit"><?php echo esc_html($this->locale->text('Verifică și continuă', 'Verify and continue')); ?><span>→</span></button><div class="zion-eu-withdrawal-feedback" data-feedback="identify" role="alert" aria-live="polite"></div></form></div>
+            <div class="zion-eu-withdrawal-step is-active" data-step="1"><div class="zion-eu-step-heading"><span>01</span><div><h2><?php echo esc_html($this->locale->text('Identifică persoana și contractul', 'Identify the person and contract')); ?></h2><p><?php echo esc_html($this->locale->text('Folosim aceste date doar pentru a găsi în siguranță contractul indicat.', 'We use these details only to securely locate the indicated contract.')); ?></p></div></div><form data-zion-form="identify"><div class="zion-eu-form-grid"><label><span><?php echo esc_html($this->locale->text('Nume complet', 'Full name')); ?> *</span><small><?php echo esc_html($this->locale->text('Numele consumatorului din contract.', 'Consumer name on the contract.')); ?></small><input name="customer_name" required autocomplete="name"></label><label><span><?php echo esc_html($this->locale->text('E-mail', 'E-mail')); ?> *</span><small><?php echo esc_html($this->locale->text('Adresa asociată comenzii.', 'Address associated with the order.')); ?></small><input name="customer_email" type="email" required autocomplete="email"></label><label><span><?php echo esc_html($this->locale->text('Telefon', 'Phone')); ?></span><small><?php echo esc_html($this->locale->text('Opțional, pentru referință.', 'Optional, for reference.')); ?></small><input name="customer_phone" type="tel" autocomplete="tel"></label><label><span><?php echo esc_html($this->locale->text('Număr comandă / contract', 'Order / contract number')); ?> *</span><small><?php echo esc_html($this->locale->text('Nu folosi datele cardului sau parola.', 'Do not use card details or a password.')); ?></small><input name="order_reference" required inputmode="numeric"></label></div><button class="zion-eu-withdrawal-button" type="submit"><?php echo esc_html($this->locale->text('Verifică și continuă', 'Verify and continue')); ?><span>→</span></button><div class="zion-eu-guest-link-request"><button type="button" data-request-guest-link><?php echo esc_html($this->locale->text('Trimite-mi un link securizat pe e-mail', 'Send me a secure link by e-mail')); ?></button><span data-guest-feedback role="status" aria-live="polite"></span></div><div class="zion-eu-withdrawal-feedback" data-feedback="identify" role="alert" aria-live="polite"></div></form></div>
             <div class="zion-eu-withdrawal-step" data-step="2" hidden><div class="zion-eu-step-heading"><span>02</span><div><h2><?php echo esc_html($this->locale->text('Formulează declarația', 'Write the statement')); ?></h2><p><?php echo esc_html($this->locale->text('Motivul este opțional. Declarația de retragere este ceea ce contează.', 'A reason is optional. The withdrawal statement is what matters.')); ?></p></div></div><div class="zion-eu-order-summary" data-order-summary></div><form data-zion-form="statement"><label class="zion-eu-full-field"><span><?php echo esc_html($this->locale->text('Observații pentru comerciant', 'Notes for the merchant')); ?></span><small><?php echo esc_html($this->locale->text('Opțional. Nu este necesar să justifici decizia.', 'Optional. You do not need to justify the decision.')); ?></small><textarea name="statement" rows="5" maxlength="2000"></textarea></label><button class="zion-eu-withdrawal-button" type="submit"><?php echo esc_html($this->locale->text('Pregătește revizuirea', 'Prepare review')); ?><span>→</span></button><div class="zion-eu-withdrawal-feedback" data-feedback="statement" role="alert" aria-live="polite"></div></form></div>
             <div class="zion-eu-withdrawal-step" data-step="3" hidden><div class="zion-eu-step-heading"><span>03</span><div><h2><?php echo esc_html($this->locale->text('Revizuiește și confirmă', 'Review and confirm')); ?></h2><p><?php echo esc_html($this->locale->text('Verifică exact ce vom salva ca dovadă, apoi confirmă transmiterea.', 'Check exactly what we will save as evidence, then confirm submission.')); ?></p></div></div><div class="zion-eu-review-card" data-review-card></div><form data-zion-form="confirm"><label class="zion-eu-confirmation"><input name="confirmation" type="checkbox" value="1" required><span><?php echo esc_html($this->locale->text('Confirm că această declarație este transmisă de mine și că datele afișate sunt corecte.', 'I confirm that this statement is submitted by me and that the displayed details are correct.')); ?></span></label><button class="zion-eu-withdrawal-button zion-eu-withdrawal-button--confirm" type="submit"><?php echo esc_html($this->locale->text('CONFIRMĂ RETRAGEREA', 'CONFIRM WITHDRAWAL')); ?><span>✓</span></button><div class="zion-eu-withdrawal-feedback" data-feedback="confirm" role="alert" aria-live="polite"></div></form></div>
             <div class="zion-eu-withdrawal-success" data-step="success" hidden><span class="zion-eu-success-mark">✓</span><span class="zion-eu-withdrawal-eyebrow"><?php echo esc_html($this->locale->text('Declarație transmisă', 'Statement submitted')); ?></span><h2><?php echo esc_html($this->locale->text('Am păstrat dovada transmiterii.', 'We kept proof of your submission.')); ?></h2><p><?php echo esc_html($this->locale->text('Comerciantul poate folosi ID-ul de mai jos pentru a identifica declarația. Păstrează-l pentru referință.', 'The merchant can use the ID below to identify the statement. Keep it for your records.')); ?></p><strong class="zion-eu-success-id" data-withdrawal-id></strong><div class="zion-eu-success-meta" data-success-meta></div></div>
@@ -134,6 +150,11 @@ final class PageManager
         return is_string($url) ? $url : home_url('/');
     }
 
+    public function public_url(): string
+    {
+        return $this->page_url();
+    }
+
     /** @return array<string, string> */
     private function strings(): array
     {
@@ -150,6 +171,8 @@ final class PageManager
             'serverProof' => $this->locale->text('Timestamp server-side va fi salvat după confirmare.', 'A server-side timestamp will be saved after confirmation.'),
             'contractIdentified' => $this->locale->text('Contract identificat', 'Contract identified'),
             'submittedAt' => $this->locale->text('Transmis la (UTC)', 'Submitted at (UTC)'),
+            'guestLinkSending' => $this->locale->text('Se trimite…', 'Sending…'),
+            'guestLinkGeneric' => $this->locale->text('Dacă datele corespund unei comenzi, vei primi în scurt timp un link securizat pe e-mail.', 'If the details match an order, you will receive a secure link by e-mail shortly.'),
         ];
     }
 }

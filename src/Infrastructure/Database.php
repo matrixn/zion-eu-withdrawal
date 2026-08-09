@@ -6,7 +6,7 @@ namespace Zion\EuWithdrawal\Infrastructure;
 
 final class Database
 {
-    public const DB_VERSION = '0.3.0';
+    public const DB_VERSION = '0.5.0';
 
     public function maybe_upgrade(): void
     {
@@ -70,6 +70,22 @@ final class Database
             KEY withdrawal_id (withdrawal_id),
             KEY product_id (product_id)
         ) {$charset};");
+
+        $guest_tokens = $wpdb->prefix . 'zion_eu_guest_tokens';
+
+        dbDelta("CREATE TABLE {$guest_tokens} (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            token_hash char(64) NOT NULL,
+            order_id bigint(20) unsigned NOT NULL,
+            email_hash char(64) NOT NULL,
+            expires_at datetime NOT NULL,
+            used_at datetime NULL,
+            created_at datetime NOT NULL,
+            PRIMARY KEY  (id),
+            UNIQUE KEY token_hash (token_hash),
+            KEY order_email (order_id, email_hash),
+            KEY expires_at (expires_at)
+        ) {$charset};");
     }
 
     /** @return array<string, string> */
@@ -80,6 +96,7 @@ final class Database
         return [
             'withdrawals' => $wpdb->prefix . 'zion_eu_withdrawals',
             'items' => $wpdb->prefix . 'zion_eu_withdrawal_items',
+            'guest_tokens' => $wpdb->prefix . 'zion_eu_guest_tokens',
         ];
     }
 }

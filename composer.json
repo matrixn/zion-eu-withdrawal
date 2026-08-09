@@ -1,7 +1,7 @@
 {
     "name": "zion3d/zion-eu-withdrawal",
     "description": "Professional EU withdrawal foundation for WooCommerce with a verified Romanian legal profile.",
-    "version": "0.3.0",
+    "version": "0.5.0",
     "type": "wordpress-plugin",
     "license": "GPL-2.0-or-later",
     "require": {
@@ -36,6 +36,10 @@
             "@php -l src/Frontend/OrderLookup.php",
             "@php -l src/Frontend/PageManager.php",
             "@php -l src/Frontend/WithdrawalFlow.php",
+            "@php -l src/Frontend/AccountArea.php",
+            "@php -l src/Infrastructure/GuestTokenRepository.php",
+            "@php -l src/Admin/WithdrawalsPage.php",
+            "@php -l src/Admin/GuidePage.php",
             "@php -l tests/smoke/phase23-workflow.php"
         ]
     },
