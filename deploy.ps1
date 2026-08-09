@@ -85,7 +85,7 @@ Invoke-WslScript $validate
 if (-not (Test-Path -LiteralPath $windowsArchivePath)) { throw "Arhiva nu a fost creată: $windowsArchivePath" }
 if ($DryRun) { Write-Host "DryRun finalizat: build-ul și verificările au trecut." -ForegroundColor Yellow; exit 0 }
 
-& scp.exe -i $SshPrivateKey -P $SynologyPort -o "IdentitiesOnly=yes" -o "PreferredAuthentications=publickey" $windowsArchivePath "$SynologyUser@$SynologyHost`:$RemoteArchivePath"
+& scp.exe -O -i $SshPrivateKey -P $SynologyPort -o "IdentitiesOnly=yes" -o "PreferredAuthentications=publickey" $windowsArchivePath "$SynologyUser@$SynologyHost`:$RemoteArchivePath"
 if ($LASTEXITCODE -ne 0) { throw "Transferul arhivei a eșuat cu codul $LASTEXITCODE." }
 
 $remote = @"
