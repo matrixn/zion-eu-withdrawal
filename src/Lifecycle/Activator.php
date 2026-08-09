@@ -30,6 +30,7 @@ final class Activator
             'return_period_days' => 14,
             'language' => 'site',
             'withdrawal_page_slug' => 'retragere-contract',
+            'withdrawal_page_id' => 0,
             'auto_create_page' => 1,
             'guest_withdrawal' => 1,
             'allow_partial_withdrawal' => 0,

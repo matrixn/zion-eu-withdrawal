@@ -6,7 +6,7 @@ namespace Zion\EuWithdrawal\Infrastructure;
 
 final class Database
 {
-    public const DB_VERSION = '0.1.0';
+    public const DB_VERSION = '0.3.0';
 
     public function maybe_upgrade(): void
     {
@@ -35,6 +35,8 @@ final class Database
             user_id bigint(20) unsigned NULL,
             customer_email varchar(190) NOT NULL,
             customer_name varchar(190) NOT NULL DEFAULT '',
+            customer_phone varchar(64) NOT NULL DEFAULT '',
+            contract_reference varchar(190) NOT NULL DEFAULT '',
             status varchar(32) NOT NULL DEFAULT 'submitted',
             legal_profile varchar(64) NOT NULL,
             legal_profile_version varchar(64) NOT NULL,
@@ -50,6 +52,7 @@ final class Database
             UNIQUE KEY withdrawal_id (withdrawal_id),
             KEY order_id (order_id),
             KEY customer_email (customer_email),
+            KEY contract_reference (contract_reference),
             KEY status (status),
             KEY created_at (created_at)
         ) {$charset};");

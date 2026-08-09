@@ -11,9 +11,9 @@ Professional foundation for the EU consumer withdrawal workflow in WooCommerce.
 
 == Description ==
 
-Zion EU Withdrawal starts with a versioned Romanian legal profile and an evidence-ready technical foundation. It includes a professional administration interface, Romanian and English copy, AJAX autosave, security-first defaults and an upgradeable database schema.
+Zion EU Withdrawal starts with a versioned Romanian legal profile and an evidence-ready technical foundation. It includes a professional administration interface, Romanian and English copy, AJAX autosave, a public withdrawal page, secure order identification, review and confirmation with a server-side timestamp.
 
-The public withdrawal page and order workflow are intentionally reserved for the next phases.
+Notifications, customer-account history and advanced eligibility rules are intentionally reserved for later phases.
 
 == Installation ==
 

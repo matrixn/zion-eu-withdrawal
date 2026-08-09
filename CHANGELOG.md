@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0 — Phase 2–3 withdrawal flow
+
+- Added an automatically created withdrawal page with shortcode and Gutenberg block.
+- Added responsive, accessible public withdrawal interface with standard legal content.
+- Added logged-in WooCommerce order buttons and secure guest-capable order identification.
+- Added AJAX lookup, statement review, explicit confirmation and success screen.
+- Added server-side timestamps, unique withdrawal IDs, immutable statement snapshots and item records.
+- Added rate limiting and generic lookup errors to reduce order enumeration risk.
+
 ## 0.1.0 — Phase 0–1 foundation
 
 - Added the versioned Romanian legal profile `RO-2026.06.19-v1`.

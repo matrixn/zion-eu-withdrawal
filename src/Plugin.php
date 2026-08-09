@@ -6,6 +6,10 @@ namespace Zion\EuWithdrawal;
 
 use Zion\EuWithdrawal\Admin\SettingsPage;
 use Zion\EuWithdrawal\Infrastructure\Database;
+use Zion\EuWithdrawal\Infrastructure\WithdrawalRepository;
+use Zion\EuWithdrawal\Frontend\OrderLookup;
+use Zion\EuWithdrawal\Frontend\PageManager;
+use Zion\EuWithdrawal\Frontend\WithdrawalFlow;
 use Zion\EuWithdrawal\Integration\WooCommerceDetector;
 use Zion\EuWithdrawal\Internationalization\LocaleManager;
 use Zion\EuWithdrawal\Legal\ROLegalProfile;
@@ -27,10 +31,19 @@ final class Plugin
     private function register_hooks(): void
     {
         add_action('plugins_loaded', [$this, 'load_textdomain']);
-        add_action('admin_init', [$this, 'maybe_upgrade']);
+        add_action('init', [$this, 'maybe_upgrade'], 1);
+
+        $database = new Database();
+        $profile = new ROLegalProfile();
+        $locale = new LocaleManager();
+        $page_manager = new PageManager($locale, $profile);
+        $page_manager->register_hooks();
+
+        $flow = new WithdrawalFlow(new OrderLookup(), new WithdrawalRepository($database), $profile, $locale);
+        $flow->register_hooks();
 
         if (is_admin()) {
-            $settings = new SettingsPage(new Database(), new ROLegalProfile(), new WooCommerceDetector(), new LocaleManager());
+            $settings = new SettingsPage($database, $profile, new WooCommerceDetector(), $locale);
             add_action('admin_menu', [$settings, 'register_menu']);
             add_action('admin_enqueue_scripts', [$settings, 'enqueue_assets']);
             add_action('wp_ajax_zion_eu_save_setting', [$settings, 'ajax_save_setting']);
@@ -48,10 +61,6 @@ final class Plugin
 
     public function maybe_upgrade(): void
     {
-        if (! current_user_can('manage_options')) {
-            return;
-        }
-
         $database = new Database();
         $database->maybe_upgrade();
     }
